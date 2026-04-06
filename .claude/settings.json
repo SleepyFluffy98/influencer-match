@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m venv .venv)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(.venv/bin/python -c ':*)",
+      "Bash(.venv/bin/python -m pytest tests/test_fetcher.py -v)",
+      "Bash(python -m pytest tests/test_feedback.py -v)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python -m pytest tests/ -v --ignore=tests/test_hashtag_generator.py)",
+      "Bash(pip install:*)",
+      "Bash(python -m pytest tests/ --ignore=tests/test_hashtag_generator.py -q)",
+      "Bash(streamlit --version)",
+      "Read(//Users/annacui/**)",
+      "Bash(python3 -c \"import sys; print\\(sys.executable\\)\")",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(pip3 show:*)",
+      "Bash(ls ~/Library/Python/*/bin/streamlit)",
+      "Bash(/Users/annacui/anaconda3/bin/conda env:*)",
+      "Bash(/Users/annacui/anaconda3/envs/new/bin/pip list:*)",
+      "Bash(/Users/annacui/anaconda3/envs/mosaic/bin/pip list:*)",
+      "Bash(/Users/annacui/anaconda3/bin/pip show:*)",
+      "Read(//usr/local/**)",
+      "Bash(ls /opt/homebrew/bin/python*)",
+      "Bash(ls /opt/homebrew/bin/pip*)",
+      "Read(//opt/homebrew/lib/**)",
+      "Bash(pip3.9 show:*)",
+      "Bash(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/pip3 show:*)",
+      "Bash(/Users/annacui/anaconda3/envs/new/bin/pip install:*)",
+      "Bash(/Users/annacui/anaconda3/envs/new/bin/python -m pytest tests/test_fetcher.py -v)"
+    ],
+    "additionalDirectories": [
+      "/Users/annacui/Desktop/influencer-match/services"
+    ]
+  }
+}
