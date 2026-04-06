@@ -12,13 +12,18 @@ from services.hashtag_generator import BrandBrief
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-_key = os.getenv("OPENAI_API_KEY")
-
-if not _key:
-    raise EnvironmentError("OPENAI_API_KEY is not set. Add it to your .env file.")
-
-_client = OpenAI(api_key=_key)
 _MODEL = "gpt-4o"  # stronger reasoning for nuanced brand-fit scoring
+_client: OpenAI | None = None
+
+
+def _get_client() -> OpenAI:
+    global _client
+    if _client is None:
+        key = os.getenv("OPENAI_API_KEY")
+        if not key:
+            raise EnvironmentError("OPENAI_API_KEY is not set. Add it to your .env file.")
+        _client = OpenAI(api_key=key)
+    return _client
 
 _PREFERENCE_PREFIX = """\
 Learned preferences from past decisions:
@@ -126,7 +131,7 @@ def _score_batch(
         profiles_json=profiles_json,
     )
 
-    response = _client.chat.completions.create(
+    response = _get_client().chat.completions.create(
         model=_MODEL,
         max_tokens=2048,
         messages=[{"role": "user", "content": prompt}],

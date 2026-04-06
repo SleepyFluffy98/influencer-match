@@ -9,13 +9,18 @@ from pydantic import BaseModel, model_validator
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-_key = os.getenv("OPENAI_API_KEY")
-
-if not _key:
-    raise EnvironmentError("OPENAI_API_KEY is not set. Add it to your .env file.")
-
-_client = OpenAI(api_key=_key)
 _MODEL = "gpt-4o-mini"  # fast and cheap — sufficient for hashtag generation
+_client: OpenAI | None = None
+
+
+def _get_client() -> OpenAI:
+    global _client
+    if _client is None:
+        key = os.getenv("OPENAI_API_KEY")
+        if not key:
+            raise EnvironmentError("OPENAI_API_KEY is not set. Add it to your .env file.")
+        _client = OpenAI(api_key=key)
+    return _client
 
 PROMPT_TEMPLATE = """\
 You are an Instagram hashtag research expert.
@@ -79,7 +84,7 @@ def generate_hashtags(brief: BrandBrief) -> list[str]:
         countries=", ".join(brief.countries) if brief.countries else "global",
     )
 
-    response = _client.chat.completions.create(
+    response = _get_client().chat.completions.create(
         model=_MODEL,
         max_tokens=256,
         messages=[{"role": "user", "content": prompt}],
@@ -101,7 +106,7 @@ def _parse_hashtag_response(raw: str, original_prompt: str) -> list[str]:
         logger.warning("First hashtag parse attempt failed, retrying with stricter prompt.")
 
     retry_prompt = original_prompt + "\n\nIMPORTANT: Return ONLY the raw JSON array, nothing else."
-    response = _client.chat.completions.create(
+    response = _get_client().chat.completions.create(
         model=_MODEL,
         max_tokens=256,
         messages=[{"role": "user", "content": retry_prompt}],

@@ -18,11 +18,14 @@ from services.hashtag_generator import BrandBrief, generate_hashtags
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-_apify_token = os.getenv("APIFY_API_TOKEN")
 _actor_id = os.getenv("APIFY_ACTOR_ID", "apify~instagram-scraper")
 
-if not _apify_token:
-    raise EnvironmentError("APIFY_API_TOKEN is not set. Add it to your .env file.")
+
+def _get_apify_token() -> str:
+    token = os.getenv("APIFY_API_TOKEN")
+    if not token:
+        raise EnvironmentError("APIFY_API_TOKEN is not set. Add it to your .env file.")
+    return token
 
 
 def fetch_instagram(brief: BrandBrief) -> list[InfluencerProfile]:
@@ -216,7 +219,7 @@ def _apify_post(body: dict) -> httpx.Response:
     actor_url_id = _actor_id.replace("/", "~")
     url = (
         f"https://api.apify.com/v2/acts/{actor_url_id}"
-        f"/run-sync-get-dataset-items?token={_apify_token}"
+        f"/run-sync-get-dataset-items?token={_get_apify_token()}"
     )
     try:
         response = httpx.post(url, json=body, timeout=120)
