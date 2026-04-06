@@ -26,6 +26,30 @@ try:
 except Exception:
     pass  # Local dev — st.secrets may not exist; .env already loaded above
 
+# ── Password gate ─────────────────────────────────────────────────────────────
+def _check_password() -> bool:
+    """Return True if the user has entered the correct password."""
+    correct = os.getenv("APP_PASSWORD", "")
+    if not correct:
+        return True  # No password configured — open access (local dev)
+
+    if st.session_state.get("authenticated"):
+        return True
+
+    st.title("Influencer Match")
+    pwd = st.text_input("Password", type="password", key="pwd_input")
+    if st.button("Enter"):
+        if pwd == correct:
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Incorrect password.")
+    return False
+
+if not _check_password():
+    st.stop()
+# ─────────────────────────────────────────────────────────────────────────────
+
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
