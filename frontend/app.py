@@ -15,16 +15,18 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-import streamlit as st
-
 # On Streamlit Community Cloud there is no .env file.
-# Inject st.secrets into os.environ so all service modules can use os.getenv().
+# Must inject st.secrets into os.environ BEFORE importing any service module,
+# because those modules raise EnvironmentError at import time if keys are missing.
 try:
+    import streamlit as st
     for _k, _v in st.secrets.items():
         if isinstance(_v, str):
             os.environ.setdefault(_k, _v)
 except Exception:
-    pass  # Local dev — .env already loaded above
+    pass  # Local dev — .env already loaded above; st.secrets may not exist yet
+
+import streamlit as st
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
