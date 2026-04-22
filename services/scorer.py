@@ -90,7 +90,7 @@ class ScoredInfluencer(BaseModel):
 def score_profiles(
     profiles: list[InfluencerProfile],
     brief: BrandBrief,
-    min_score: int = 60,
+    min_score: int = 50,
 ) -> list[ScoredInfluencer]:
     """
     Score each profile against the brand brief using Azure OpenAI.
@@ -108,6 +108,13 @@ def score_profiles(
         scored.extend(_score_batch(batch, brief, preference_context))
 
     filtered = [s for s in scored if s.overall_score >= min_score]
+    logger.info(
+        "Scorer: %d profiles scored, %d passed min_score=%d, %d dropped",
+        len(scored), len(filtered), min_score, len(scored) - len(filtered),
+    )
+    if len(scored) > len(filtered):
+        dropped = [(s.profile.username, s.overall_score) for s in scored if s.overall_score < min_score]
+        logger.info("  Dropped by min_score: %s", dropped[:15])
     return sorted(filtered, key=lambda s: s.overall_score, reverse=True)
 
 

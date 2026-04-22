@@ -26,16 +26,14 @@ try:
 except Exception:
     pass  # Local dev — st.secrets may not exist; .env already loaded above
 
+
 # ── Password gate ─────────────────────────────────────────────────────────────
 def _check_password() -> bool:
-    """Return True if the user has entered the correct password."""
     correct = os.getenv("APP_PASSWORD", "")
     if not correct:
-        return True  # No password configured — open access (local dev)
-
+        return True
     if st.session_state.get("authenticated"):
         return True
-
     st.title("Influencer Match")
     pwd = st.text_input("Password", type="password", key="pwd_input")
     if st.button("Enter"):

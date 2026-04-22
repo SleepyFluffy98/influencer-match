@@ -48,18 +48,42 @@ def fetch_instagram(brief: BrandBrief) -> list[InfluencerProfile]:
     logger.info("Found %d unique Instagram authors", len(post_data_by_user))
 
     profiles = _scrape_profiles(post_data_by_user)
-    tier = brief.get_tier_for("instagram")
-    tier_filtered = _filter_by_tier(profiles, tier, platform="instagram")
-
-    # Activity filter: last post within 30 days, avg likes > 1000
-    active = [
-        p for p in tier_filtered
-        if _passes_activity_filter(p, post_data_by_user.get(p.username, {}))
-    ]
     logger.info(
-        "Instagram: %d after tier filter, %d after activity filter",
+        "Instagram pipeline: %d unique authors → %d profiles built",
+        len(post_data_by_user), len(profiles),
+    )
+
+    tier = brief.get_tier_for("instagram")
+    from services.fetchers import TIER_RANGES
+    tier_range = TIER_RANGES["instagram"].get(tier, (0, 10_000_000))
+    tier_filtered = _filter_by_tier(profiles, tier, platform="instagram")
+    logger.info(
+        "Tier filter ('%s', %s–%s followers): %d → %d profiles",
+        tier, f"{tier_range[0]:,}", f"{tier_range[1]:,}",
+        len(profiles), len(tier_filtered),
+    )
+    if len(profiles) > len(tier_filtered):
+        outsiders = [(p.username, p.followers) for p in profiles if p not in tier_filtered]
+        logger.info("  Dropped by tier filter: %s", outsiders[:10])
+
+    # Activity filter: last post within 30 days, avg likes >= MIN_AVG_ENGAGEMENT
+    active = []
+    activity_dropped = []
+    for p in tier_filtered:
+        pdata = post_data_by_user.get(p.username, {})
+        if _passes_activity_filter(p, pdata):
+            active.append(p)
+        else:
+            last = pdata.get("last_posted_at", "unknown")
+            activity_dropped.append((p.username, f"last={last}"))
+    logger.info(
+        "Activity filter (max %d days old, min %d avg likes): %d → %d profiles",
+        MAX_DAYS_SINCE_POST, MIN_AVG_ENGAGEMENT,
         len(tier_filtered), len(active),
     )
+    if activity_dropped:
+        logger.info("  Dropped by activity filter: %s", activity_dropped[:10])
+
     return active
 
 
@@ -94,18 +118,9 @@ def _extract_post_data_by_user(posts: list[dict]) -> dict[str, dict]:
         if caption:
             data[username]["captions"].append(caption)
 
-        likes    = int(post.get("likesCount") or 0)
-        comments = int(post.get("commentsCount") or 0)
-        views    = int(post.get("videoPlayCount") or 0)
-
-        data[username]["total_likes"]    += likes
-        data[username]["total_comments"] += comments
-        data[username]["post_count"]     += 1
-
-        # Per-post engagement: views-based where available (Reels/videos)
-        if views > 0:
-            rate = _calc_engagement(likes + comments, views)
-            data[username]["per_post_rates"].append(rate)
+        # Instagram hides like/comment/view counts on public hashtag scrapes — always 0.
+        # Engagement rate falls back to the profile-level calculation in _build_profile.
+        data[username]["post_count"] += 1
 
         # Track the most recent post timestamp
         ts = post.get("timestamp")
@@ -119,8 +134,9 @@ def _extract_post_data_by_user(posts: list[dict]) -> dict[str, dict]:
 
 def _passes_activity_filter(profile: InfluencerProfile, post_data: dict) -> bool:
     """
-    Returns False if the creator is inactive or has very low avg engagement.
-    Criteria: last post ≤ MAX_DAYS_SINCE_POST days ago, avg likes ≥ MIN_AVG_ENGAGEMENT.
+    Returns False if the creator hasn't posted recently.
+    Note: Instagram hides like/comment counts on public hashtag scrapes (always 0),
+    so we only filter on recency — not engagement volume.
     """
     last_posted = post_data.get("last_posted_at")
     if last_posted:
@@ -133,16 +149,7 @@ def _passes_activity_filter(profile: InfluencerProfile, post_data: dict) -> bool
                 logger.info("Skipping %s — last post >%d days ago", profile.username, MAX_DAYS_SINCE_POST)
                 return False
         except ValueError:
-            pass  # unparseable timestamp — allow through
-
-    post_count = max(post_data.get("post_count", 1), 1)
-    avg_likes = post_data.get("total_likes", 0) / post_count
-    if avg_likes < MIN_AVG_ENGAGEMENT:
-        logger.info(
-            "Skipping %s — avg likes %.0f < %d", profile.username, avg_likes, MIN_AVG_ENGAGEMENT
-        )
-        return False
-
+            pass
     return True
 
 

@@ -21,10 +21,14 @@ def fetch_profiles(brief: BrandBrief) -> list[InfluencerProfile]:
     results: list[InfluencerProfile] = []
 
     if "instagram" in brief.platforms:
-        results.extend(fetch_instagram(brief))
+        ig = fetch_instagram(brief)
+        logger.info("Instagram fetch returned %d profiles", len(ig))
+        results.extend(ig)
 
     if "youtube" in brief.platforms:
-        results.extend(fetch_youtube(brief))
+        yt = fetch_youtube(brief)
+        logger.info("YouTube fetch returned %d profiles", len(yt))
+        results.extend(yt)
 
     seen: set[str] = set()
     deduped: list[InfluencerProfile] = []

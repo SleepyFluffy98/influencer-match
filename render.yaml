@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: influencer-match
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: APIFY_API_TOKEN
+        sync: false
+      - key: APIFY_ACTOR_ID
+        value: apify~instagram-scraper
+      - key: APP_PASSWORD
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false

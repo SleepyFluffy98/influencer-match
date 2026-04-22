@@ -27,9 +27,9 @@ class InfluencerProfile(BaseModel):
 # YouTube:   nano 1k-10k, micro 10k-100k, macro 100k+
 TIER_RANGES: dict[str, dict[str, tuple[int, int]]] = {
     "instagram": {
-        "nano":  (5_000,    50_000),
-        "micro": (50_000,  100_000),
-        "macro": (100_000, 10_000_000),
+        "nano":  (1_000,    50_000),
+        "micro": (50_000,  500_000),
+        "macro": (500_000, 10_000_000),
     },
     "youtube": {
         "nano":  (1_000,    10_000),
@@ -40,7 +40,7 @@ TIER_RANGES: dict[str, dict[str, tuple[int, int]]] = {
 
 # Activity filter thresholds applied to all platforms
 MAX_DAYS_SINCE_POST = 30   # creator must have posted within this many days
-MIN_AVG_ENGAGEMENT = 1_000 # avg likes (IG) or avg views (YT) per post
+MIN_AVG_ENGAGEMENT = 100   # avg likes (IG) or avg views (YT) per post; 1k was too strict for nano
 
 
 def _calc_engagement(interactions: float, views: float) -> float:
